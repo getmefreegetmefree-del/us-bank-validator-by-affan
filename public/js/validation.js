@@ -145,6 +145,28 @@ export function validateRoutingNumber(raw) {
 }
 
 /**
+ * Spot obviously invented account numbers (keyboard runs, repeats).
+ * Returns a short reason, or null. This can flag fakes; it can NEVER confirm a number is real.
+ */
+export function looksMadeUp(value) {
+  if (/^(\d)\1+$/.test(value)) return 'every digit is the same';
+  const d = value.split('').map(Number);
+  const asc = d.every((x, i) => i === 0 || x === (d[i - 1] + 1) % 10);
+  const desc = d.every((x, i) => i === 0 || x === (d[i - 1] + 9) % 10);
+  if (asc) return 'digits count straight up (like 123456…)';
+  if (desc) return 'digits count straight down (like 987654…)';
+  for (let n = 2; n <= Math.floor(value.length / 2); n++) {
+    const unit = value.slice(0, n);
+    if (unit.repeat(Math.ceil(value.length / n)).slice(0, value.length) === value && value.length >= n * 2) {
+      return `the same ${n}-digit block "${unit}" repeats`;
+    }
+  }
+  // Long runs of the same digit (e.g. 10000000 or 55550000)
+  if (/(\d)\1{5,}/.test(value)) return 'six or more of the same digit in a row';
+  return null;
+}
+
+/**
  * Mask an account number for display: only the last 4 digits are shown.
  */
 export function maskAccountNumber(raw) {
@@ -202,9 +224,11 @@ export function validateAccountNumber(raw, opts = {}) {
     warn = true;
     messages.push('The account number is identical to the routing number. This is usually a data-entry mistake.');
   }
-  if (/^(\d)\1+$/.test(value)) {
+  const fake = looksMadeUp(value);
+  if (fake) {
     warn = true;
-    messages.push('Every digit is the same, which is very unlikely for a real account number.');
+    result.suspicious = true;
+    messages.push(`Looks made up: ${fake}. Real account numbers almost never follow a pattern like this.`);
   }
   if (value.length <= ACCOUNT_SHORT_WARNING_AT) {
     warn = true;
@@ -242,9 +266,12 @@ export function validateAccountNumber(raw, opts = {}) {
 
   if (!warn) {
     messages.push(
-      `${value.length} digits, within the accepted 4–17 digit range. The format is plausible, but that doesn't mean the account exists.`
+      `${value.length} digits, within the 4–17 digit range banks use. That only means the number COULD exist.`
     );
   }
+  messages.push(
+    'Any number of the right length passes this check, including random ones. Only the bank, or a verification service connected to bank data, can confirm the account is real.'
+  );
   result.status = warn ? 'warning' : 'valid';
   return result;
 }

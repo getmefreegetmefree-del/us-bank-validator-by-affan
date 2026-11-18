@@ -60,10 +60,24 @@ test('account number format', () => {
   assert.equal(validateAccountNumber('0000000').status, 'invalid');
   assert.equal(validateAccountNumber('12a456').status, 'invalid');
   assert.equal(validateAccountNumber('1234').status, 'warning');
-  assert.equal(validateAccountNumber('12345678901234567').status, 'valid'); // 17
+  assert.equal(validateAccountNumber('58204817392046157').status, 'valid'); // 17
+  assert.equal(validateAccountNumber('12345678901234567').suspicious, true);
   assert.equal(validateAccountNumber('4829173650').status, 'valid');
   assert.equal(validateAccountNumber('1111111111').status, 'warning');
   assert.equal(validateAccountNumber('021000021', { routing: '021000021' }).status, 'warning');
+});
+
+test('made-up account number patterns are flagged', () => {
+  for (const v of ['123456789', '9876543210', '121212121212', '123123123', '4444444444', '10000000']) {
+    const r = validateAccountNumber(v);
+    assert.equal(r.suspicious, true, v);
+    assert.equal(r.status, 'warning', v);
+  }
+  for (const v of ['4829173650', '000123456789', '58004820']) {
+    assert.ok(!validateAccountNumber(v).suspicious, v);
+  }
+  // A clean format pass always carries the "not proof" message
+  assert.ok(validateAccountNumber('4829173650').messages.some((m) => /random/.test(m)));
 });
 
 test('institution rule applied only when configured', () => {

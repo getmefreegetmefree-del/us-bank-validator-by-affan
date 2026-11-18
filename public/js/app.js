@@ -245,7 +245,7 @@ function verifyInBrowser(input, serverFailed) {
   else notVerified.push('Routing number. It failed format or checksum validation.');
   notVerified.push('Bank identity. No routing directory is connected in browser-only mode.');
   notVerified.push('ACH eligibility. It needs the Federal Reserve FedACH directory or a routing API.');
-  if (accountFormat.status !== 'invalid') verified.push('Account number format (digits only, 4–17 characters).');
+  if (accountFormat.status !== 'invalid') verified.push('Account number format only (4–17 digits). This does NOT prove the account exists.');
   else notVerified.push('Account number. It failed basic format validation.');
   notVerified.push('Institution-specific account length. No reliable rule is available.');
   notVerified.push('Whether the account exists, is open, or is closed. That needs a real verification provider, and format checks cannot answer it.');
@@ -493,11 +493,25 @@ function render(r) {
   const af = r.accountFormat;
   const afLines = [...af.messages];
   if (af.institutionRule?.source) afLines.push(`Rule source: ${af.institutionRule.source}`);
+  // Green ONLY when a real provider confirmed the account. A format pass alone stays yellow,
+  // because any random number of the right length passes it.
+  const confirmed = r.accountVerification.status === 'open_verified';
+  const afColor = af.status === 'invalid' || af.suspicious ? 'red' : confirmed && af.status === 'valid' ? 'green' : 'yellow';
+  const afLabel =
+    af.status === 'invalid'
+      ? 'Invalid format'
+      : af.suspicious
+        ? 'Looks fake'
+        : confirmed
+          ? 'Confirmed by provider'
+          : af.status === 'warning'
+            ? 'Check this'
+            : 'Format OK · NOT verified';
   rows.push(
     row({
-      title: 'Account number format',
-      color: formatColor(af.status),
-      status: af.status === 'valid' ? 'Format OK' : af.status === 'warning' ? 'Check this' : 'Invalid format',
+      title: 'Account number',
+      color: afColor,
+      status: afLabel,
       value: `${r.input.accountNumberMasked || '(empty)'} · ${r.input.accountType === 'savings' ? 'Savings' : 'Checking'}`,
       lines: afLines,
     })
@@ -517,7 +531,7 @@ function render(r) {
   els.rows.replaceChildren(...rows);
 
   // Overall banner
-  const anyRed = [routingColor(r.routing.status), formatColor(af.status), avMeta.color, achColor(ach)].includes('red') || inst.status === 'not_found';
+  const anyRed = [routingColor(r.routing.status), afColor, avMeta.color, achColor(ach)].includes('red') || inst.status === 'not_found';
   const accountVerified = av.status === 'open_verified';
   let tone, title, text;
   if (anyRed) {
@@ -530,8 +544,9 @@ function render(r) {
     text = `${av.provider} reports the account as open. The routing and format checks also passed.`;
   } else {
     tone = 'yellow';
-    title = r.mode === 'server' && r.institution.status === 'identified' ? 'Details look valid, but the account is not verified' : 'Basic checks passed, but the account is not verified';
-    text = 'The numbers are well-formed, but nothing here confirms the account exists or is open.';
+    title = 'Account NOT verified. It may or may not be real';
+    text =
+      'The numbers have a valid format, but a random number of the right length would pass these checks too. Confirming the account exists needs the bank or a connected verification service (e.g. Lyons AOA).';
   }
   els.overall.className = `overall ${tone}`;
   els.overall.replaceChildren(el('strong', { text: title }), el('span', { text }));

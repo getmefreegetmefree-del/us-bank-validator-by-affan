@@ -74,7 +74,7 @@ export async function runVerification({ bankName, routingNumber, accountNumber, 
   else if (ach.status === 'redirect') verified.push(`ACH routing: use a different routing number (${ach.source}).`);
   else notVerified.push('ACH eligibility. No authoritative data was available.');
 
-  if (accountFormat.status !== 'invalid') verified.push('Account number format (digits only, 4–17 characters).');
+  if (accountFormat.status !== 'invalid') verified.push('Account number format only (4–17 digits). This does NOT prove the account exists.');
   else notVerified.push('Account number. It failed basic format validation.');
   if (!accountFormat.institutionRule && accountFormat.status !== 'invalid') {
     notVerified.push('Institution-specific account length. No reliable rule is configured for this bank.');
