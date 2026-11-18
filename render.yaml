@@ -1,0 +1,29 @@
+# One-click backend deploy on Render (https://render.com).
+# Dashboard → New → Blueprint → pick this repo. Then fill in the secret values.
+services:
+  - type: web
+    name: us-bank-validator-by-affan
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: ALLOWED_ORIGINS
+        value: https://getmefreegetmefree-del.github.io
+      - key: ACCOUNT_VERIFICATION_PROVIDER
+        value: none
+      - key: INCREASE_ENVIRONMENT
+        value: production
+      - key: INCREASE_API_KEY
+        sync: false
+      - key: SOCURE_API_KEY
+        sync: false
+      - key: SOCURE_ENVIRONMENT
+        value: sandbox
+      - key: SOCURE_OPEN_MIN_SCORE
+        sync: false
+      - key: SOCURE_CLOSED_MAX_SCORE
+        sync: false

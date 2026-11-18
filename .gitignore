@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.*
+!.env.example
+data/FedACHdir.*
+data/fedach.*
+data/institution-rules.json
+*.log
+.DS_Store

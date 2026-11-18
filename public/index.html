@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>US Bank Validator by Affan</title>
+  <meta name="description" content="Validate US bank routing and account numbers: ABA checksum, bank identification, ACH eligibility and optional real account verification." />
+  <meta name="referrer" content="no-referrer" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <div class="brand">
+        <img src="favicon.svg" alt="" width="36" height="36" />
+        <div>
+          <h1>US Bank Validator</h1>
+          <p class="byline">by Affan</p>
+        </div>
+      </div>
+      <div id="mode" class="mode mode-loading" role="status" aria-live="polite">
+        <span class="dot"></span><span id="mode-text">Checking server…</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap layout">
+    <section class="card form-card" aria-labelledby="form-title">
+      <h2 id="form-title">Bank details</h2>
+      <p class="muted small">Enter the details by hand. Nothing you type is saved.</p>
+
+      <form id="verify-form" novalidate autocomplete="off">
+        <div class="field">
+          <label for="bankName">Bank name <span class="optional">(optional)</span></label>
+          <input id="bankName" name="bankName" type="text" maxlength="100" placeholder="e.g. Wells Fargo" autocomplete="off" />
+          <p class="hint">Compared with the bank listed for the routing number, if a directory is connected.</p>
+        </div>
+
+        <div class="field">
+          <label for="routingNumber">Routing number</label>
+          <input id="routingNumber" name="routingNumber" type="text" inputmode="numeric" maxlength="11" placeholder="9 digits" autocomplete="off" required aria-describedby="routing-live" />
+          <p id="routing-live" class="hint live" aria-live="polite">9 digits, printed at the bottom-left of a check.</p>
+        </div>
+
+        <div class="field">
+          <label for="accountNumber">Account number</label>
+          <div class="input-group">
+            <input id="accountNumber" name="accountNumber" type="password" inputmode="numeric" maxlength="21" placeholder="4–17 digits" autocomplete="off" required aria-describedby="account-live" />
+            <button type="button" id="toggle-account" class="btn-ghost" aria-pressed="false" aria-controls="accountNumber">Show</button>
+          </div>
+          <p id="account-live" class="hint live" aria-live="polite">Hidden while you type. Results only show the last 4 digits.</p>
+        </div>
+
+        <fieldset class="field">
+          <legend>Account type</legend>
+          <div class="segmented">
+            <label><input type="radio" name="accountType" value="checking" checked /> <span>Checking</span></label>
+            <label><input type="radio" name="accountType" value="savings" /> <span>Savings</span></label>
+          </div>
+        </fieldset>
+
+        <div class="actions">
+          <button type="submit" id="verify-btn" class="btn-primary">
+            <span class="btn-label">Verify</span>
+            <span class="spinner" aria-hidden="true"></span>
+          </button>
+          <button type="button" id="clear-btn" class="btn-secondary">Clear</button>
+        </div>
+        <p id="form-error" class="form-error" role="alert"></p>
+      </form>
+
+      <div class="notice small">
+        <strong>Read-only.</strong> This tool never starts transactions, micro-deposits or withdrawals.
+      </div>
+    </section>
+
+    <section class="results" aria-labelledby="results-title" aria-live="polite">
+      <div class="results-head">
+        <h2 id="results-title">Results</h2>
+        <span id="checked-at" class="muted small"></span>
+      </div>
+
+      <div id="empty-state" class="card empty">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 10.5 12 5l9 5.5M5 10v8m4.67-8v8m4.66-8v8M19 10v8M3.5 19.5h17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <p>Enter a routing number and account number, then click <strong>Verify</strong>.</p>
+        <p class="muted small">Each check gets its own color: <span class="legend green">verified</span> <span class="legend yellow">uncertain or not checked</span> <span class="legend red">invalid</span></p>
+      </div>
+
+      <div id="results" hidden>
+        <div id="overall" class="overall"></div>
+        <div id="result-rows" class="rows"></div>
+        <div class="card summary">
+          <div>
+            <h3><span class="icon ok">✓</span> What was verified</h3>
+            <ul id="verified-list"></ul>
+          </div>
+          <div>
+            <h3><span class="icon no">!</span> What was <em>not</em> verified</h3>
+            <ul id="not-verified-list"></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap footer small muted">
+    <p>US Bank Validator by Affan. Routing checks use the official ABA checksum. Bank and ACH data come only from connected directories (Federal Reserve FedACH file or Increase). Account status comes only from a connected verification provider. Submitted details are processed in memory and never stored.</p>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

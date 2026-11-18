@@ -1,0 +1,12 @@
+{
+  "_comment": "Copy to institution-rules.json and add ONLY rules you can cite. Rules without a 'source' are ignored. The values below are placeholders showing the format, not real bank rules.",
+  "rules": [
+    {
+      "institution": "Example Bank (placeholder, replace)",
+      "routingNumbers": ["000000000"],
+      "minLength": 10,
+      "maxLength": 12,
+      "source": "Where this rule comes from, e.g. 'Example Bank ACH specification, v3, 2026-01'"
+    }
+  ]
+}
