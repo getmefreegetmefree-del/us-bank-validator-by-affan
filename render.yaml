@@ -15,6 +15,12 @@ services:
         value: https://getmefreegetmefree-del.github.io
       - key: ACCOUNT_VERIFICATION_PROVIDER
         value: none
+      - key: LYONS_COMPANY_ID
+        sync: false
+      - key: LYONS_USERNAME
+        sync: false
+      - key: LYONS_PASSWORD
+        sync: false
       - key: INCREASE_ENVIRONMENT
         value: production
       - key: INCREASE_API_KEY

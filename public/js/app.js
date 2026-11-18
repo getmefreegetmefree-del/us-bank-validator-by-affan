@@ -46,7 +46,7 @@ function el(tag, attrs = {}, ...children) {
     else if (k === 'text') node.textContent = v;
     else node.setAttribute(k, v);
   }
-  for (const c of children.flat()) {
+  for (const c of children.flat(Infinity)) {
     if (c == null || c === false) continue;
     node.append(c instanceof Node ? c : document.createTextNode(String(c)));
   }
@@ -89,7 +89,7 @@ function setMode(health) {
     return;
   }
   const rs = health.routingSources || {};
-  const hasDirectory = rs.fedachDirectory?.configured || rs.increase?.configured;
+  const hasDirectory = rs.lyons?.configured || rs.fedachDirectory?.configured || rs.increase?.configured;
   const hasProvider = health.accountVerification?.ready;
   if (hasProvider) {
     els.mode.classList.add('mode-full');
@@ -307,6 +307,92 @@ const ACCOUNT_STATUS = {
   skipped: { color: 'neutral', label: 'Not checked' },
 };
 
+/** Directory-style institution profile (phones, addresses, IDs), like a bank registry record. */
+function profileCard(inst, r, color, statusLabel, notes) {
+  const p = inst.profile;
+  const c = COLOR[color];
+  const subtitle = [p.location, p.officeType].filter(Boolean).join(' · ');
+
+  const phoneList = (p.phones || []).length
+    ? el(
+        'dl',
+        { class: 'kv' },
+        p.phones.map((ph) => [
+          el('dt', { text: ph.label }),
+          el('dd', {}, el('a', { href: `tel:${String(ph.number).replace(/[^\d+]/g, '')}`, text: ph.number }), ph.extension ? ` ext. ${ph.extension}` : null),
+        ])
+      )
+    : el('p', { class: 'muted small', text: 'No phone numbers in this directory record.' });
+
+  const addrBlock = (label, lines) =>
+    lines && lines.length ? el('div', { class: 'addr' }, el('div', { class: 'addr-label', text: label }), lines.map((l) => el('div', { text: l }))) : null;
+  const addresses = [addrBlock('Office address', p.officeAddress), addrBlock('Mailing address', p.mailingAddress)].filter(Boolean);
+
+  const meta = [];
+  const metaItem = (label, valueNode) => meta.push(el('div', { class: 'meta-item' }, el('span', { class: 'meta-label', text: label }), el('span', { class: 'meta-value' }, valueNode)));
+  if (p.homePage && /^https?:\/\//i.test(p.homePage)) metaItem('Homepage', el('a', { href: p.homePage, target: '_blank', rel: 'noopener noreferrer', text: p.homePage.replace(/^https?:\/\//, '').replace(/\/$/, '') }));
+  if (p.institutionId != null) metaItem(p.idLabel || 'Institution ID', String(p.institutionId));
+  if (p.branchCount != null) metaItem('Branches', String(p.branchCount));
+  if (p.institutionType) metaItem('Type', p.institutionType);
+  if (p.swift) metaItem('SWIFT/BIC', p.swift);
+  if (p.achContactName) metaItem('ACH Dept Manager', p.achContactName);
+  for (const e of p.emails || []) metaItem(`${e.label} e-mail`, el('a', { href: `mailto:${e.email}`, text: e.email }));
+  for (const x of p.extra || []) metaItem(x.label, x.value);
+  metaItem('Status', p.active === false ? 'Inactive' : 'Active');
+
+  const railChip = (name, v) => el('span', { class: `chip ${v === true ? 'on' : v === false ? 'off' : 'na'}`, text: `${name}: ${v === true ? 'Yes' : v === false ? 'No' : 'n/a'}` });
+  const achV = r.ach.status === 'eligible' ? true : r.ach.status === 'not_eligible' ? false : null;
+  const rails = el('div', { class: 'chips' }, railChip('ACH', achV), railChip('Wire', p.rails?.wire), railChip('RTP', p.rails?.rtp), railChip('FedNow', p.rails?.fednow));
+
+  let rtnTable = null;
+  if ((p.routingNumbers || []).length) {
+    rtnTable = el(
+      'table',
+      { class: 'rtn-table' },
+      el('thead', {}, el('tr', {}, ['Routing number', 'Purpose', 'Active', 'Preferred'].map((h) => el('th', { text: h })))),
+      el(
+        'tbody',
+        {},
+        p.routingNumbers.map((x) =>
+          el(
+            'tr',
+            { class: x.routingNumber === r.routing.value ? 'current' : null },
+            el('td', { text: x.routingNumber }),
+            el('td', { text: x.purpose || '–' }),
+            el('td', { text: x.active ? 'Yes' : 'No' }),
+            el('td', { text: x.preferred ? 'Yes' : '' })
+          )
+        )
+      )
+    );
+  }
+
+  return el(
+    'article',
+    { class: `card row profile ${c.cls}` },
+    el('div', { class: 'row-icon', 'aria-hidden': 'true', text: c.icon }),
+    el(
+      'div',
+      { class: 'row-body' },
+      el('div', { class: 'row-head' }, el('h3', { text: 'Identified bank' }), el('span', { class: `pill ${c.cls}`, text: statusLabel })),
+      el('p', { class: 'inst-name', text: p.name || inst.name }),
+      p.branchName ? el('p', { class: 'inst-sub', text: p.branchName }) : null,
+      subtitle ? el('p', { class: 'inst-sub', text: subtitle }) : null,
+      rails,
+      el(
+        'div',
+        { class: 'profile-grid' },
+        el('section', {}, el('h4', { text: 'Phone numbers' }), phoneList),
+        el('section', {}, el('h4', { text: 'Addresses' }), addresses.length ? addresses : el('p', { class: 'muted small', text: 'No address in this directory record.' }))
+      ),
+      meta.length ? el('div', { class: 'meta' }, meta) : null,
+      rtnTable ? el('details', { class: 'rtn-details' }, el('summary', { text: `Routing numbers at this institution (${p.routingNumbers.length})` }), rtnTable) : null,
+      p.notes ? el('p', { class: 'muted small', text: `Note: ${p.notes}` }) : null,
+      notes.length ? el('ul', { class: 'row-lines' }, notes.map((l) => el('li', { text: l }))) : null
+    )
+  );
+}
+
 function row({ title, color, status, value, lines = [], extra }) {
   const c = COLOR[color];
   return el(
@@ -381,7 +467,11 @@ function render(r) {
       el('a', { href: r.manualLookupUrl || FED_SEARCH_URL, target: '_blank', rel: 'noopener noreferrer', text: 'Look up this routing number on the Federal Reserve directory ↗' })
     );
   }
-  rows.push(row({ title: 'Identified bank', color: institutionColor(inst), status: instStatus, value: inst.name, lines: instLines, extra: instExtra }));
+  if (inst.profile) {
+    rows.push(profileCard(inst, r, institutionColor(inst), instStatus, instLines.filter((l) => !String(l).startsWith('Location:'))));
+  } else {
+    rows.push(row({ title: 'Identified bank', color: institutionColor(inst), status: instStatus, value: inst.name, lines: instLines, extra: instExtra }));
+  }
 
   // ACH
   const ach = r.ach;
@@ -394,7 +484,7 @@ function render(r) {
     row({
       title: 'ACH eligibility',
       color: achColor(ach),
-      status: ach.status === 'eligible' ? 'Eligible' : ach.status === 'not_eligible' ? 'Not eligible' : 'Unknown',
+      status: ach.status === 'eligible' ? 'Eligible' : ach.status === 'not_eligible' ? 'Not eligible' : ach.status === 'redirect' ? 'Use another RTN' : 'Unknown',
       lines: achLines,
     })
   );

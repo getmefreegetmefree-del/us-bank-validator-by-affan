@@ -125,7 +125,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const s = routingSourcesSummary();
     const p = activeProvider();
     console.log(`US Bank Validator by Affan running on http://localhost:${port}`);
-    console.log(`  FedACH directory: ${s.fedachDirectory.configured ? `${s.fedachDirectory.records} records` : 'not loaded'}`);
+    console.log(`  Lyons RTN directory: ${s.lyons.configured ? 'configured' : 'not configured'}`);
+    console.log(`  FedACH directory:${s.fedachDirectory.configured ? `${s.fedachDirectory.records} records` : 'not loaded'}`);
     console.log(`  Increase routing API: ${s.increase.configured ? 'configured' : 'not configured'}`);
     console.log(`  Account verification: ${p.key === 'none' ? 'none (format checks only)' : `${p.label} (${p.ready ? 'ready' : 'missing credentials'})`}`);
   });

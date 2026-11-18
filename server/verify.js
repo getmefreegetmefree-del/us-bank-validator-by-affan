@@ -62,12 +62,16 @@ export async function runVerification({ bankName, routingNumber, accountNumber, 
   if (routing.checksumValid) verified.push('Routing number format and ABA checksum (offline math check).');
   else notVerified.push('Routing number. It failed format or checksum validation.');
 
-  if (institution.status === 'identified') verified.push(`Bank identified as ${institution.name} via ${institution.source}.`);
+  if (institution.status === 'identified') {
+    verified.push(`Bank identified as ${institution.name} via ${institution.source}.`);
+    if (institution.profile?.phones?.length) verified.push('Institution contact numbers and addresses (from the directory).');
+  }
   else if (institution.status === 'not_found') notVerified.push('Bank identity. The routing number was not found in the connected directories.');
   else notVerified.push('Bank identity. No routing directory or API was available for this check.');
 
   if (ach.status === 'eligible') verified.push(`ACH eligibility (${ach.source}).`);
   else if (ach.status === 'not_eligible') verified.push(`ACH eligibility: NOT eligible (${ach.source}).`);
+  else if (ach.status === 'redirect') verified.push(`ACH routing: use a different routing number (${ach.source}).`);
   else notVerified.push('ACH eligibility. No authoritative data was available.');
 
   if (accountFormat.status !== 'invalid') verified.push('Account number format (digits only, 4–17 characters).');

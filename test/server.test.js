@@ -73,7 +73,7 @@ test('identified bank, ACH eligible, account NOT verified without provider', asy
 
 test('replaced routing number points to new number', async () => {
   const r = await (await verify({ routingNumber: '121000248', accountNumber: '4829173650', accountType: 'savings' })).json();
-  assert.equal(r.ach.status, 'eligible');
+  assert.equal(r.ach.status, 'redirect');
   assert.match(r.ach.detail, /021000021/);
 });
 

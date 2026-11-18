@@ -2,6 +2,7 @@
  * Account-verification provider registry.
  *
  * ACCOUNT_VERIFICATION_PROVIDER selects the provider:
+ *   - "lyons"   → Lyons Commercial Data AOA (account status)
  *   - "socure"  → Socure Account Intelligence (RiskOS)
  *   - "none"    → (default) no real verification; results say so explicitly
  *
@@ -12,6 +13,7 @@
  * and register it below. `status` must be one of ACCOUNT_STATUSES.
  */
 import { socureConfigured, verifyWithSocure } from './socure.js';
+import { lyonsConfigured, verifyWithLyons } from '../lyons.js';
 
 export const ACCOUNT_STATUSES = [
   'open_verified',
@@ -24,6 +26,11 @@ export const ACCOUNT_STATUSES = [
 ];
 
 const PROVIDERS = {
+  lyons: {
+    label: 'Lyons Commercial Data (AOA)',
+    configured: lyonsConfigured,
+    verify: verifyWithLyons,
+  },
   socure: {
     label: 'Socure Account Intelligence',
     configured: socureConfigured,
