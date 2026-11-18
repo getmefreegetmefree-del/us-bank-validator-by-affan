@@ -3,7 +3,7 @@ import {
   validateAccountNumber,
   normalizeDigits,
   maskAccountNumber,
-} from './validation.js';
+} from './validation.js?v=__BUILD__';
 
 const FED_SEARCH_URL =
   'https://www.frbservices.org/resources/e-payments-routing-directory/search-fedach-participant-rdfis/';

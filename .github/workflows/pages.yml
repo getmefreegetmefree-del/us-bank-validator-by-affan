@@ -43,6 +43,12 @@ jobs:
           node -e 'const fs=require("fs");const b=(process.env.API_BASE||"").trim();fs.writeFileSync("public/js/config.js","window.APP_CONFIG = { apiBase: "+JSON.stringify(b)+" };\n");'
           cat public/js/config.js
 
+      - name: Stamp build version (cache-busting)
+        run: |
+          V="${GITHUB_SHA::8}"
+          sed -i "s/__BUILD__/$V/g" public/index.html public/js/app.js
+          grep -o 'v=[a-z0-9]*' public/index.html | head -3
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
